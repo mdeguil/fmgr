@@ -9,6 +9,10 @@ import shutil
         Une classe "métier" regroupe les fonctions de sélection, copie, déplacement 
         et suppression.
 
+        Refactoring (SRP) : l'exploration (affichage, navigation) est sortie de
+        FileManager dans la classe FileExplorer ; FileManager ne gère plus que
+        la copie, le déplacement et la suppression.
+
         Deux rectifications : il faudrait passer le code et l'interface en anglais 
         et sortir la sélection de la classe "métier"
 """
@@ -64,10 +68,10 @@ class FileSelector:
         self.selected_files.clear()
 
 
-class FileManager:
-    def __init__(self):
+class FileExplorer:
+    def __init__(self, file_selector):
         self.current_path = os.path.expanduser('~')
-        self.file_selector = FileSelector()
+        self.file_selector = file_selector
 
     def display_directory_contents(self):
         """Display contents of the current directory"""
@@ -103,6 +107,11 @@ class FileManager:
         """Move to the parent directory"""
         self.current_path = os.path.dirname(self.current_path)
         self.display_directory_contents()
+
+
+class FileManager:
+    def __init__(self, file_selector):
+        self.file_selector = file_selector
 
     def copy_files(self, destination):
         """Copy selected files"""
@@ -144,8 +153,10 @@ class FileManager:
 
 
 def main_menu():
-    file_manager = FileManager()
-    
+    file_selector = FileSelector()
+    file_explorer = FileExplorer(file_selector)
+    file_manager = FileManager(file_selector)
+
     while True:
         print("\n--- File Explorer ---")
         print("1. Display Directory")
@@ -161,19 +172,19 @@ def main_menu():
         
         try:
             if choice == '1':
-                file_manager.display_directory_contents()
-            
+                file_explorer.display_directory_contents()
+
             elif choice == '2':
                 index = int(input("Enter navigation index: "))
-                file_manager.navigate(index)
-            
+                file_explorer.navigate(index)
+
             elif choice == '3':
-                file_manager.go_to_parent_directory()
-            
+                file_explorer.go_to_parent_directory()
+
             elif choice == '4':
-                file_manager.display_directory_contents()
+                file_explorer.display_directory_contents()
                 indices = input("Enter file indices to select (comma-separated): ")
-                file_manager.file_selector.select_files_by_indices(indices, file_manager.current_path)
+                file_selector.select_files_by_indices(indices, file_explorer.current_path)
             
             elif choice == '5':
                 dest = input("Enter destination path for copying: ")
